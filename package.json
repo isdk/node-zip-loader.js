@@ -28,7 +28,7 @@
     "format:fix": "pnpm run format --write",
     "lint": "eslint .",
     "lint:fix": "pnpm run lint --fix",
-    "test": "vitest run",
+    "test": "node --import ./dist/index.js test/loader.test.js",
     "release": "pnpm run clean && pnpm run build && git add -f docs && git ci -m 'docs: update API docs' && pnpm dlx commit-and-tag-version -s",
     "release.alpha": "pnpm run release -- --prerelease alpha"
   },
