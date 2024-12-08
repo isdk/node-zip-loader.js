@@ -7,13 +7,18 @@ export function resolve(specifier: string, context: ResolveHookContext, defaultR
   context?: ResolveHookContext,
 ) => ResolveFnOutput | Promise<ResolveFnOutput>) {
   const { parentURL = undefined } = context;
+  const urlObj = new URL(specifier, parentURL);
 
-  if (specifier.endsWith('.zip')) {
-    const resolved = new URL(specifier, parentURL).href;
+  if (urlObj.pathname.endsWith('.zip')) {
+    const resolved = urlObj.href;
     return {
       url: resolved,
       format: 'module',
       shortCircuit: true,
+      importAttributes: {
+        ...context.importAttributes,
+        parentURL: parentURL,
+      }
     };
   }
 
