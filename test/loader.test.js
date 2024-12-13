@@ -4,8 +4,8 @@ import assert from 'assert'
 // const echo = await import('./echo.zip', {with: {a: "1"}}).then(m => m.echo)
 // const add = await import('./echo.zip#add.js').then(m => m.add)
 
-import { echo } from './echo.zip' with {a: "1"}
-import { add } from './echo.zip#add.js'
+import { echo } from 'zip:./echo.zip' with {a: "1"}
+import { add } from 'zip:./echo.zip#add.js'
 
 assert.deepStrictEqual(await echo(1, 2, 3), [1, 2, 3])
 assert.equal(add(2,3), 5)

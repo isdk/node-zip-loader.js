@@ -1,15 +1,25 @@
-import { URL } from 'url';
+import path from 'path'
+import { URL } from 'url'
 import type { LoadFnOutput, LoadHookContext, ResolveHookContext, ResolveFnOutput } from 'module'
-import AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip'
 
 export function resolve(specifier: string, context: ResolveHookContext, defaultResolve: (
   specifier: string,
   context?: ResolveHookContext,
 ) => ResolveFnOutput | Promise<ResolveFnOutput>) {
-  const { parentURL = undefined } = context;
-  const urlObj = new URL(specifier, parentURL);
 
-  if (urlObj.pathname.endsWith('.zip')) {
+  const { parentURL = undefined } = context;
+  let urlObj = getUrl(specifier);
+
+  if (urlObj?.protocol === 'zip:') {
+    if (urlObj.pathname.startsWith('./')) {
+      if (parentURL) {
+        const parentObj = new URL(parentURL);
+        const absPath = path.resolve(path.dirname(parentObj.pathname), urlObj.pathname)
+        // Can not modify the custom protocol pathname
+        urlObj.href = urlObj.protocol + absPath + urlObj.hash
+      }
+    }
     const resolved = urlObj.href;
     return {
       url: resolved,
@@ -27,16 +37,15 @@ export function resolve(specifier: string, context: ResolveHookContext, defaultR
 
 export async function load(url: string, context: LoadHookContext, defaultLoad: (url: string, context?: LoadHookContext) => LoadFnOutput | Promise<LoadFnOutput>) {
   const urlObj = new URL(url);
-  const filePath = urlObj.pathname;
 
-  if (filePath.endsWith('.zip')) {
+  if (urlObj.protocol === 'zip:') {
+    const filePath = urlObj.pathname;
+    // throw new Error('Not implemented ' + filePath);
     const zip = new AdmZip(filePath);
     const zipEntries = zip.getEntries();
 
-    // 解析 URL 中的文件路径
-    const hash = urlObj.hash.substring(1) || 'index.js'; // 去掉开头的 '#'
+    const hash = urlObj.hash.substring(1) || 'index.js'; // remove the first char '#'
 
-    // 找到指定的文件
     let entryPoint = null;
     for (let entry of zipEntries) {
       if (entry.entryName === hash) {
@@ -49,7 +58,6 @@ export async function load(url: string, context: LoadHookContext, defaultLoad: (
       throw new Error(`File not found in the ZIP file: ${hash}`);
     }
 
-    // 解压指定文件到内存
     const data = entryPoint.getData().toString('utf8');
 
     return {
@@ -60,4 +68,11 @@ export async function load(url: string, context: LoadHookContext, defaultLoad: (
   }
 
   return defaultLoad(url, context);
+}
+
+function getUrl(s: string, base?: string) {
+  try {
+    return new URL(s, base);
+  } catch (error) {
+  }
 }
