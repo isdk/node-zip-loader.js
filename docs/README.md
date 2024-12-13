@@ -12,5 +12,5 @@ node --import @isdk/node-zip-loader ./my.app.js
 
 ```js
 // my.app.js
-import sth from './something.zip#file.js'
+import sth from 'zip:./something.zip#file.js'
 ```
